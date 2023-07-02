@@ -2,6 +2,7 @@
 
 
 #include "Items/Item.h"
+#include "RPGFantasy/DebugMacros.h"
 
 AItem::AItem()
 {
@@ -12,13 +13,15 @@ AItem::AItem()
 void AItem::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	UE_LOG(LogTemp, Warning, TEXT("Begin Play called!"));
+
+	SetActorLocation(FVector(0.f, 0.f, 320.f));
+	SetActorRotation(FRotator(0.f, 45.f, 0.f));
+	DRAW_SPHERE(GetActorLocation());
+	DRAW_VECTOR(GetActorLocation(), GetActorLocation() + GetActorForwardVector() * 100.f);
 }
 
 void AItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
