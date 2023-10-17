@@ -3,24 +3,29 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/HitInterface.h"
+#include "Interfaces/CombatInterface.h"
 #include "Characters/CharacterTypes.h"
 #include "BaseCharacter.generated.h"
 
 class AWeapon;
 class UAnimMontage;
 class UAttributeComponent;
+class UAbilitySystemComponent;
+class UAttributeSet;
+class UGameplayEffect;
 
 UCLASS()
-class RPGFANTASY_API ABaseCharacter : public ACharacter, public IHitInterface
+class RPGFANTASY_API ABaseCharacter : public ACharacter, public IHitInterface, public IAbilitySystemInterface, public ICombatInterface
 {
 	GENERATED_BODY()
 
 public:                                              
 	ABaseCharacter();
-	virtual void Tick(float DeltaTime) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 protected:                                         
 	virtual void BeginPlay() override;
@@ -42,6 +47,8 @@ protected:
 	virtual int32 PlayDeathMontage();
 	virtual void PlayDodgeMontage();
 	void StopAttackMontage();
+
+	virtual void InitAbilityActorInfo();
 
 	UFUNCTION(BlueprintCallable)
 		FVector GetTranslationWarpTarget();
@@ -72,6 +79,26 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 		TEnumAsByte<EDeathPose> DeathPose;
+
+	//GAS
+
+	UPROPERTY(VisibleAnywhere)
+		TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+
+	UPROPERTY()
+		TObjectPtr<UAttributeSet> AttributeSet;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
+		TSubclassOf<UGameplayEffect> DefaultPrimaryAttributes;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
+		TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
+		TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
+
+	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const;
+	void InitializeDefaultAttributes() const;
 
 private:
 	void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);
@@ -104,4 +131,5 @@ private:
 
 public:
 	FORCEINLINE TEnumAsByte<EDeathPose> GetDeathPose() const { return DeathPose; }
+	FORCEINLINE UAttributeSet* GetAttributeSet() const { return AttributeSet; }
 };

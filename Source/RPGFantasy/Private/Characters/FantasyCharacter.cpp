@@ -15,6 +15,10 @@
 #include "Component/AttributeComponent.h"
 #include "Items/Soul.h"
 #include "Items/Treasure.h"
+#include "Characters/FantasyPlayerState.h"
+#include "AbilitySystemComponent.h"
+#include "Characters/FantasyPlayerController.h"
+#include "AbilitySystem/FantasyAbilitySystemComponent.h"
 
 AFantasyCharacter::AFantasyCharacter()
 {
@@ -122,6 +126,30 @@ void AFantasyCharacter::AddGold(ATreasure* Gold)
 		Atribute->AddGold(Gold->GetGold());
 		FantasyOverlay->SetGold(Atribute->GetGold());
 	}
+}
+
+void AFantasyCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	// Init ability actor info for the Server
+	InitAbilityActorInfo();
+}
+
+void AFantasyCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	// Init ability actor info for the Client
+	InitAbilityActorInfo();
+}
+
+int32 AFantasyCharacter::GetPlayerLevel()
+{
+	const AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
+	check(FantasyPlayerState);
+
+	return FantasyPlayerState->GetPlayerLevel();
 }
 
 void AFantasyCharacter::BeginPlay()
@@ -323,6 +351,23 @@ void AFantasyCharacter::HitReactEnd()
 bool AFantasyCharacter::IsUnoccupied()
 {
 	return ActionState == EActionState::EAS_Unoccupied;
+}
+
+void AFantasyCharacter::InitAbilityActorInfo()
+{
+	AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
+	check(FantasyPlayerState);
+	FantasyPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(FantasyPlayerState, this);
+	Cast<UFantasyAbilitySystemComponent>(FantasyPlayerState->GetAbilitySystemComponent())->AbilityActorInfoSet();
+
+	AbilitySystemComponent = FantasyPlayerState->GetAbilitySystemComponent();
+	AttributeSet = FantasyPlayerState->GetAttributeSet();
+
+	if (AFantasyPlayerController* FantasyPlayerController = Cast<AFantasyPlayerController>(GetController()))
+		if (AFantasyHUD* FantasyHUD = Cast<AFantasyHUD>(FantasyPlayerController->GetHUD()))
+			FantasyHUD->InitOverlay(FantasyPlayerController, FantasyPlayerState, AbilitySystemComponent, AttributeSet);
+
+	InitializeDefaultAttributes();
 }
 
 void AFantasyCharacter::InitializeFantasyOverlay()

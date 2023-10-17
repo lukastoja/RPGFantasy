@@ -33,6 +33,10 @@ public:
 	virtual void AddSouls(ASoul* Soul) override;
 	virtual void AddGold(ATreasure* Gold) override;
 
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
+
+	virtual int32 GetPlayerLevel() override;
 protected:
 	virtual void BeginPlay() override;
 
@@ -73,6 +77,7 @@ protected:
 
 private:
 	bool IsUnoccupied();
+	virtual void InitAbilityActorInfo() override;
 	void InitializeFantasyOverlay();
 	void SetHUDHealth();
 

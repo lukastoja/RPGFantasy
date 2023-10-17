@@ -2,21 +2,37 @@
 
 
 #include "HUD/FantasyHUD.h"
+#include "HUD/FantasyUserWidget.h"
 #include "HUD/FantasyOverlay.h"
+#include "HUD/WidgetController/OverlayWidgetController.h"
 
 
-void AFantasyHUD::BeginPlay()
+UOverlayWidgetController* AFantasyHUD::GetOverlayWidgetController(const FWidgetControllerParams& WCParams)
 {
-	Super::BeginPlay();
+	if (OverlayWidgetController == nullptr)
+	{
+		OverlayWidgetController = NewObject<UOverlayWidgetController>(this, OverlayWidgetControllerClass);
+		OverlayWidgetController->SetWidgetControllerParams(WCParams);
+		OverlayWidgetController->BindCallbacksToDependencies();
+	}
+
+	return OverlayWidgetController;
+}
+
+void AFantasyHUD::InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS)
+{
+	checkf(OverlayWidgetControllerClass, TEXT("Overlay widget controller class unitialized, please fill out BP_FantasyHUD"));
+	checkf(OverlayWidgetClass, TEXT("Overlay widget class unitialized, please fill out BP_FantasyHUD"));
 
 	UWorld* World = GetWorld();
 	if (World)
 	{
-		APlayerController* Controller = World->GetFirstPlayerController();
-		if (Controller && FantasyOverlayClass)
-		{
-			FantasyOverlay = CreateWidget<UFantasyOverlay>(Controller, FantasyOverlayClass);
-			FantasyOverlay->AddToViewport();
-		}
+		const FWidgetControllerParams WidgetControllerParams(PC, PS, ASC, AS);
+		UOverlayWidgetController* WidgetController = GetOverlayWidgetController(WidgetControllerParams);
+
+		OverlayWidget = CreateWidget<UFantasyUserWidget>(World, OverlayWidgetClass);
+		OverlayWidget->SetWidgetController(WidgetController);
+		WidgetController->BroadcastInitialValues();
+		OverlayWidget->AddToViewport();
 	}
 }

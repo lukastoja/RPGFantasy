@@ -35,6 +35,14 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		EEnemyState EnemyState = EEnemyState::EES_Patrolling;
 
+	virtual int32 GetPlayerLevel() override;
+
+protected:
+	virtual void InitAbilityActorInfo() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
+		int32 Level = 1;
+
 private:
 	//AI Behavior
 	void InitializeEnemy();
@@ -60,6 +68,7 @@ private:
 	void MoveToTarget(AActor* Target);
 	AActor* ChoosePatrolTarget();
 	void SpawnDefaultWeapon();
+	void DecreaseSpawnerCount();
 
 	UFUNCTION()
 		void PawnSeen(APawn* SeenPawn);
@@ -124,4 +133,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 		TSubclassOf<class ASoul> SoulClass;
+
+public:
+	FORCEINLINE void SetPatrolTarget(AActor* PatrolTargetNew) { this->PatrolTarget = PatrolTargetNew; };
+	FORCEINLINE void SetPatrolTargets(const TArray<AActor*> PatrolTargetsNew) { this->PatrolTargets = PatrolTargetsNew; };
 };

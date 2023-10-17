@@ -10,6 +10,9 @@
 #include "HUD/HealthBarComponent.h"
 #include "Items/Weapons/Weapon.h"
 #include "Items/Soul.h"
+#include "Spawner/MobSpawner.h"
+#include "AbilitySystem/FantasyAbilitySystemComponent.h"
+#include "AbilitySystem/FantasyAttributeSet.h"
 
 AEnemy::AEnemy()
 {
@@ -32,6 +35,12 @@ AEnemy::AEnemy()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
+
+	AbilitySystemComponent = CreateDefaultSubobject<UFantasyAbilitySystemComponent>("AbilitySystemComponent");
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+
+	AttributeSet = CreateDefaultSubobject<UFantasyAttributeSet>("AttributeSet");
 }
 
 void AEnemy::Tick(float DeltaTime)
@@ -82,6 +91,8 @@ void AEnemy::BeginPlay()
 	if (PawnSensing) PawnSensing->OnSeePawn.AddDynamic(this, &AEnemy::PawnSeen);
 	InitializeEnemy();
 	Tags.Add(FName("Enemy"));
+
+	InitAbilityActorInfo();
 }
 
 void AEnemy::Die_Implementation()
@@ -95,6 +106,7 @@ void AEnemy::Die_Implementation()
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	SpawnSoul();
+	DecreaseSpawnerCount();
 }
 
 void AEnemy::SpawnSoul()
@@ -137,6 +149,17 @@ void AEnemy::AttackEnd()
 {
 	EnemyState = EEnemyState::EES_NoState;
 	CheckCombatTarget();
+}
+
+int32 AEnemy::GetPlayerLevel()
+{
+	return Level;
+}
+
+void AEnemy::InitAbilityActorInfo()
+{
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	Cast<UFantasyAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
 }
 
 void AEnemy::InitializeEnemy()
@@ -309,6 +332,16 @@ void AEnemy::SpawnDefaultWeapon()
 		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
 		DefaultWeapon->Equip(GetMesh(), FName("WeaponSocket"), this, this);
 		EquippedWeapon = DefaultWeapon;
+	}
+}
+
+void AEnemy::DecreaseSpawnerCount()
+{
+	AMobSpawner* MobSpawner = Cast<AMobSpawner>(GetOwner());
+	if (MobSpawner)
+	{
+		MobSpawner->SetEnemySpawnedCount(MobSpawner->GetEnemySpawnedCount() - 1);
+		MobSpawner->ResetSpawnTimer();
 	}
 }
 
