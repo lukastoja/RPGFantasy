@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/FantasyAbilitySystemComponent.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -190,6 +191,14 @@ void ABaseCharacter::InitializeDefaultAttributes() const
 	ApplyEffectToSelf(DefaultVitalAttributes, 1.f);
 }
 
+void ABaseCharacter::AddCharacterAbilities()
+{
+	UFantasyAbilitySystemComponent* FantasyASC = CastChecked<UFantasyAbilitySystemComponent>(AbilitySystemComponent);
+	if (!HasAuthority()) return;
+
+	FantasyASC->AddCharacterAbilities(StartupAbilities);
+}
+
 bool ABaseCharacter::CanAttack()
 {
 	return false;
@@ -234,5 +243,15 @@ void ABaseCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type Collision
 		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnabled);
 		EquippedWeapon->IgnoreActors.Empty();
 	}
+}
+
+FVector ABaseCharacter::GetCombatSocketLocation()
+{
+	return GetMesh()->GetSocketLocation(WeaponTipSocketName);
+}
+
+FRotator ABaseCharacter::GetActorRotation_Interface()
+{
+	return GetActorRotation();
 }
 

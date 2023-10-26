@@ -13,6 +13,9 @@
 #include "Spawner/MobSpawner.h"
 #include "AbilitySystem/FantasyAbilitySystemComponent.h"
 #include "AbilitySystem/FantasyAttributeSet.h"
+#include "RPGFantasy/RPGFantasy.h"
+#include "Components/WidgetComponent.h"
+#include "HUD/FantasyUserWidget.h"
 
 AEnemy::AEnemy()
 {
@@ -21,10 +24,14 @@ AEnemy::AEnemy()
 	GetMesh()->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Projectile, ECollisionResponse::ECR_Overlap);
 	GetMesh()->SetGenerateOverlapEvents(true);
 	
-	HealthBarWidget = CreateDefaultSubobject<UHealthBarComponent>(TEXT("HealthBar"));
+	HealthBarWidget = CreateDefaultSubobject<UHealthBarComponent>(TEXT("HealthBar1"));
 	HealthBarWidget->SetupAttachment(GetRootComponent());
+
+	HealthBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
+	HealthBar->SetupAttachment(GetRootComponent());
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
@@ -93,6 +100,30 @@ void AEnemy::BeginPlay()
 	Tags.Add(FName("Enemy"));
 
 	InitAbilityActorInfo();
+
+	if (UFantasyUserWidget* FantasyUserWidget = Cast<UFantasyUserWidget>(HealthBar->GetUserWidgetObject()))
+		FantasyUserWidget->SetWidgetController(this);
+
+	if (const UFantasyAttributeSet* FantasyAS = Cast<UFantasyAttributeSet>(AttributeSet))
+	{
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(FantasyAS->GetHealthAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnHealthChanged.Broadcast(Data.NewValue);
+			}
+		);
+
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(FantasyAS->GetMaxHealthAttribute()).AddLambda(
+			[this](const FOnAttributeChangeData& Data)
+			{
+				OnMaxHealthChanged.Broadcast(Data.NewValue);
+			}
+		);
+
+		OnHealthChanged.Broadcast(FantasyAS->GetHealth());
+		OnMaxHealthChanged.Broadcast(FantasyAS->GetMaxHealth());
+
+	}
 }
 
 void AEnemy::Die_Implementation()
@@ -160,6 +191,8 @@ void AEnemy::InitAbilityActorInfo()
 {
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	Cast<UFantasyAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
+
+	InitializeDefaultAttributes();
 }
 
 void AEnemy::InitializeEnemy()

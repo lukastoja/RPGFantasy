@@ -120,6 +120,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Sound")
 		USoundBase* PickupSound;
+
+public:
+	FORCEINLINE UStaticMeshComponent* GetItemMesh() const { return ItemMesh; }
 };
 
 template<typename T>

@@ -5,6 +5,7 @@
 #include "HUD/FantasyUserWidget.h"
 #include "HUD/FantasyOverlay.h"
 #include "HUD/WidgetController/OverlayWidgetController.h"
+#include "HUD/WidgetController/AttributeMenuWidgetController.h"
 
 
 UOverlayWidgetController* AFantasyHUD::GetOverlayWidgetController(const FWidgetControllerParams& WCParams)
@@ -17,6 +18,18 @@ UOverlayWidgetController* AFantasyHUD::GetOverlayWidgetController(const FWidgetC
 	}
 
 	return OverlayWidgetController;
+}
+
+UAttributeMenuWidgetController* AFantasyHUD::GetAttributeMenuWidgetController(const FWidgetControllerParams& WCParams)
+{
+	if (AttributeMenuWidgetController == nullptr)
+	{
+		AttributeMenuWidgetController = NewObject<UAttributeMenuWidgetController>(this, AttributeMenuWidgetControllerClass);
+		AttributeMenuWidgetController->SetWidgetControllerParams(WCParams);
+		AttributeMenuWidgetController->BindCallbacksToDependencies();
+	}
+
+	return AttributeMenuWidgetController;
 }
 
 void AFantasyHUD::InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS)

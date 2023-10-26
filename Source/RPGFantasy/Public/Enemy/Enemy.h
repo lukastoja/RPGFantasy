@@ -5,10 +5,12 @@
 #include "CoreMinimal.h"
 #include "Characters/BaseCharacter.h"
 #include "Characters/CharacterTypes.h"
+#include "HUD/WidgetController/OverlayWidgetController.h"
 #include "Enemy.generated.h"
 
 class UHealthBarComponent;
 class UPawnSensingComponent;
+class UWidgetComponent;
 
 UCLASS()
 class RPGFANTASY_API AEnemy : public ABaseCharacter
@@ -37,11 +39,20 @@ public:
 
 	virtual int32 GetPlayerLevel() override;
 
+	UPROPERTY(BlueprintAssignable)
+		FOnAttributeChangedSignature OnHealthChanged;
+
+	UPROPERTY(BlueprintAssignable)
+		FOnAttributeChangedSignature OnMaxHealthChanged;
+
 protected:
 	virtual void InitAbilityActorInfo() override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
 		int32 Level = 1;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		TObjectPtr<UWidgetComponent> HealthBar;
 
 private:
 	//AI Behavior

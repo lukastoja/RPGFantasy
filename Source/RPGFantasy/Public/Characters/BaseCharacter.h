@@ -16,6 +16,7 @@ class UAttributeComponent;
 class UAbilitySystemComponent;
 class UAttributeSet;
 class UGameplayEffect;
+class UGameplayAbility;
 
 UCLASS()
 class RPGFANTASY_API ABaseCharacter : public ACharacter, public IHitInterface, public IAbilitySystemInterface, public ICombatInterface
@@ -68,6 +69,13 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 		AWeapon* EquippedWeapon;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+		FName WeaponTipSocketName;
+
+	virtual FVector GetCombatSocketLocation() override;
+
+	virtual FRotator GetActorRotation_Interface() override;
+
 	UPROPERTY(VisibleAnywhere)
 		UAttributeComponent* Atribute;
 
@@ -99,6 +107,8 @@ protected:
 
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const;
 	void InitializeDefaultAttributes() const;
+	
+	void AddCharacterAbilities();
 
 private:
 	void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);
@@ -128,6 +138,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 		TArray<FName> DeathMontageSections;
+
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+		TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
 
 public:
 	FORCEINLINE TEnumAsByte<EDeathPose> GetDeathPose() const { return DeathPose; }
