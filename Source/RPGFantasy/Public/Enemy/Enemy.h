@@ -6,6 +6,7 @@
 #include "Characters/BaseCharacter.h"
 #include "Characters/CharacterTypes.h"
 #include "HUD/WidgetController/OverlayWidgetController.h"
+#include "AbilitySystem/Data/CharacterClassInfo.h"
 #include "Enemy.generated.h"
 
 class UHealthBarComponent;
@@ -26,7 +27,7 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual void Die_Implementation() override;
+	virtual void Die() override;
 
 	void SpawnSoul();
 	virtual void Attack() override;
@@ -45,11 +46,23 @@ public:
 	UPROPERTY(BlueprintAssignable)
 		FOnAttributeChangedSignature OnMaxHealthChanged;
 
+	void HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+		bool bHitReacting = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+		float BaseWalkSpeed = 250.f;
+
 protected:
 	virtual void InitAbilityActorInfo() override;
+	virtual void InitializeDefaultAttributes() const override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
 		int32 Level = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
+		ECharacterClass CharacterClass = ECharacterClass::Warrior;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		TObjectPtr<UWidgetComponent> HealthBar;

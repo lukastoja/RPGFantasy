@@ -153,6 +153,13 @@ int32 AFantasyCharacter::GetPlayerLevel()
 	return FantasyPlayerState->GetPlayerLevel();
 }
 
+void AFantasyCharacter::Die()
+{
+	Super::Die();
+	ActionState = EActionState::EAS_Dead;
+	DisableMeshCollision();
+}
+
 void AFantasyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -306,12 +313,12 @@ void AFantasyCharacter::PlayEquipMontage(const FName& SectionName)
 	}
 }
 
-void AFantasyCharacter::Die_Implementation()
+/*void AFantasyCharacter::Die_Implementation()
 {
 	Super::Die_Implementation();
 	ActionState = EActionState::EAS_Dead;
 	DisableMeshCollision();
-}
+}*/
 
 bool AFantasyCharacter::HasEnoughStamina()
 {

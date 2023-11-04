@@ -37,6 +37,7 @@ public:
 	virtual void OnRep_PlayerState() override;
 
 	virtual int32 GetPlayerLevel() override;
+	virtual void Die() override;
 protected:
 	virtual void BeginPlay() override;
 
@@ -59,7 +60,7 @@ protected:
 	void Disarm();
 	void Arm();
 	void PlayEquipMontage(const FName& SectionName);
-	virtual void Die_Implementation() override;
+	//virtual void Die_Implementation() override;
 	bool HasEnoughStamina();
 	bool IsOccupied();
 

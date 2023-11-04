@@ -18,6 +18,22 @@ ABaseCharacter::ABaseCharacter()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 }
 
+UAnimMontage* ABaseCharacter::GetHitReactMontage_Implementation()
+{
+	return HitReactMontage;
+}
+
+void ABaseCharacter::Die()
+{
+	Tags.Add(FName("Dead"));
+	PlayDeathMontage();
+	MulticastHandleDeath();
+}
+
+void ABaseCharacter::MulticastHandleDeath_Implementation()
+{
+}
+
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -29,11 +45,11 @@ void ABaseCharacter::Attack()
 		CombatTarget = nullptr;
 }
 
-void ABaseCharacter::Die_Implementation()
+/*void ABaseCharacter::Die_Implementation()
 {
 	Tags.Add(FName("Dead"));
 	PlayDeathMontage();
-}
+}*/
 
 int32 ABaseCharacter::PlayAttackMontage()
 {

@@ -27,13 +27,14 @@ public:
 	ABaseCharacter();
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	virtual UAnimMontage* GetHitReactMontage_Implementation() override;
+	virtual void Die() override;
 
+	UFUNCTION(NetMulticast, Reliable)
+		virtual void MulticastHandleDeath();
 protected:                                         
 	virtual void BeginPlay() override;
 	virtual void Attack();
-
-	UFUNCTION(BlueprintNativeEvent)
-		void Die();
 
 	void DirectionalHitReact(const FVector& ImpactPoint);
 	virtual void HandleDamage(float DamageAmount);
@@ -106,7 +107,7 @@ protected:
 		TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
 
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const;
-	void InitializeDefaultAttributes() const;
+	virtual void InitializeDefaultAttributes() const;
 	
 	void AddCharacterAbilities();
 
@@ -124,7 +125,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 		UAnimMontage* AttackMontage;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	UPROPERTY(EditAnywhere, Category = "Combat")
 		UAnimMontage* HitReactMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")

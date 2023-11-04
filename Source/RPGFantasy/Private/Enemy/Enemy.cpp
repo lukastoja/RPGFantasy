@@ -16,6 +16,8 @@
 #include "RPGFantasy/RPGFantasy.h"
 #include "Components/WidgetComponent.h"
 #include "HUD/FantasyUserWidget.h"
+#include "AbilitySystem/FantasyAbilitySystemLibrary.h"
+#include "FantasyGameplayTags.h"
 
 AEnemy::AEnemy()
 {
@@ -99,7 +101,11 @@ void AEnemy::BeginPlay()
 	InitializeEnemy();
 	Tags.Add(FName("Enemy"));
 
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 	InitAbilityActorInfo();
+
+	if (HasAuthority())
+		UFantasyAbilitySystemLibrary::GiveStartupAbilities(this, AbilitySystemComponent);
 
 	if (UFantasyUserWidget* FantasyUserWidget = Cast<UFantasyUserWidget>(HealthBar->GetUserWidgetObject()))
 		FantasyUserWidget->SetWidgetController(this);
@@ -120,15 +126,20 @@ void AEnemy::BeginPlay()
 			}
 		);
 
+		AbilitySystemComponent->RegisterGameplayTagEvent(FFantasyGameplayTags::Get().Effects_HitReact, EGameplayTagEventType::NewOrRemoved).AddUObject(
+			this,
+			&AEnemy::HitReactTagChanged
+		);
+
 		OnHealthChanged.Broadcast(FantasyAS->GetHealth());
 		OnMaxHealthChanged.Broadcast(FantasyAS->GetMaxHealth());
 
 	}
 }
 
-void AEnemy::Die_Implementation()
+void AEnemy::Die()
 {
-	Super::Die_Implementation();
+	Super::Die();
 	EnemyState = EEnemyState::EES_Dead;
 	ClearAttackTimer();
 	DisableCapsule();
@@ -138,6 +149,12 @@ void AEnemy::Die_Implementation()
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	SpawnSoul();
 	DecreaseSpawnerCount();
+}
+
+void AEnemy::HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	bHitReacting = NewCount > 0;
+	GetCharacterMovement()->MaxWalkSpeed = bHitReacting ? 0.f : BaseWalkSpeed;
 }
 
 void AEnemy::SpawnSoul()
@@ -192,7 +209,13 @@ void AEnemy::InitAbilityActorInfo()
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	Cast<UFantasyAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
 
-	InitializeDefaultAttributes();
+	if (HasAuthority())
+		InitializeDefaultAttributes();
+}
+
+void AEnemy::InitializeDefaultAttributes() const
+{
+	UFantasyAbilitySystemLibrary::InitializeDefaultAttributes(this, CharacterClass, Level, AbilitySystemComponent);
 }
 
 void AEnemy::InitializeEnemy()
