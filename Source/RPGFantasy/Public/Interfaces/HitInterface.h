@@ -25,4 +25,10 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent)
 		void GetHit(const FVector& ImpactPoint, AActor* Hitter);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		void SetCombatTarget(AActor* InCombatTarget);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		AActor* GetCombatTarget() const;
 };

@@ -47,6 +47,8 @@ float AItem::TransformedCos()
 
 void AItem::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGameplayEffect> GameplayEffectClass)
 {
+	if (TargetActor->ActorHasTag(FName("Enemy")) && !bApplyEffectsToEnemies) return;
+
 	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
 	if (TargetASC == nullptr) return;
 
@@ -61,10 +63,15 @@ void AItem::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGameplayEffect
 
 	if (bIsInfinite && InfiniteEffectRemovalPolicy == EEffectRemovalPolicy::DoNotRemove)
 		ActiveEffectHandles.Add(ActiveEffectHandle, TargetASC);
+
+	if (!bIsInfinite)
+		Destroy();
 }
 
 void AItem::OnOverlap(AActor* TargetActor)
 {
+	if (TargetActor->ActorHasTag(FName("Enemy")) && !bApplyEffectsToEnemies) return;
+
 	if (InstantEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnOverlap)
 		ApplyEffectToTarget(TargetActor, InstantGameplayEffectClass);
 
@@ -74,6 +81,8 @@ void AItem::OnOverlap(AActor* TargetActor)
 
 void AItem::OnEndOverlap(AActor* TargetActor)
 {
+	if (TargetActor->ActorHasTag(FName("Enemy")) && !bApplyEffectsToEnemies) return;
+
 	if (InstantEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnEndOverlap)
 		ApplyEffectToTarget(TargetActor, InstantGameplayEffectClass);
 

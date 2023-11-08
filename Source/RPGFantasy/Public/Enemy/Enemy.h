@@ -12,6 +12,8 @@
 class UHealthBarComponent;
 class UPawnSensingComponent;
 class UWidgetComponent;
+class UBehaviorTree;
+class AFantasyAIController;
 
 UCLASS()
 class RPGFANTASY_API AEnemy : public ABaseCharacter
@@ -20,6 +22,7 @@ class RPGFANTASY_API AEnemy : public ABaseCharacter
 
 public:
 	AEnemy();
+	virtual void PossessedBy(AController* NewController) override;
 	virtual void Tick(float DeltaTime) override;	
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void Destroyed() override;
@@ -34,6 +37,8 @@ public:
 	virtual bool CanAttack() override;
 	virtual void HandleDamage(float DamageAmount) override;
 	virtual void AttackEnd() override;
+	virtual void SetCombatTarget_Implementation(AActor* InCombatTarget) override;
+	virtual AActor* GetCombatTarget_Implementation() const override;
 
 	UPROPERTY(BlueprintReadOnly)
 		EEnemyState EnemyState = EEnemyState::EES_Patrolling;
@@ -66,6 +71,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		TObjectPtr<UWidgetComponent> HealthBar;
+
+	UPROPERTY(EditAnywhere, Category = "AI")
+		TObjectPtr<UBehaviorTree> BehaviorTree;
+
+	UPROPERTY()
+		TObjectPtr<AFantasyAIController> FantasyAIController;
 
 private:
 	//AI Behavior

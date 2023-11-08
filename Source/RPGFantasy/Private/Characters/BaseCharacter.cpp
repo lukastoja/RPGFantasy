@@ -9,6 +9,7 @@
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/FantasyAbilitySystemComponent.h"
+#include <FantasyGameplayTags.h>
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -32,6 +33,7 @@ void ABaseCharacter::Die()
 
 void ABaseCharacter::MulticastHandleDeath_Implementation()
 {
+	bDead = true;
 }
 
 void ABaseCharacter::BeginPlay()
@@ -261,13 +263,38 @@ void ABaseCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type Collision
 	}
 }
 
-FVector ABaseCharacter::GetCombatSocketLocation()
+bool ABaseCharacter::IsDead_Implementation() const
 {
-	return GetMesh()->GetSocketLocation(WeaponTipSocketName);
+	return bDead;
+}
+
+AActor* ABaseCharacter::GetAvatar_Implementation()
+{
+	return this;
+}
+
+FVector ABaseCharacter::GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag)
+{
+	const FFantasyGameplayTags& GameplayTags = FFantasyGameplayTags::Get();
+	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Weapon))
+		return GetMesh()->GetSocketLocation(WeaponTipSocketName);
+
+	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_LeftHand))
+		return GetMesh()->GetSocketLocation(LeftHandTipSocketName);
+
+	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_RightHand))
+		return GetMesh()->GetSocketLocation(RightHandTipSocketName);
+
+	return FVector();
 }
 
 FRotator ABaseCharacter::GetActorRotation_Interface()
 {
 	return GetActorRotation();
+}
+
+TArray<FTaggedMontage> ABaseCharacter::GetAttackMontage_Implementation()
+{
+	return AttackMontages;
 }
 

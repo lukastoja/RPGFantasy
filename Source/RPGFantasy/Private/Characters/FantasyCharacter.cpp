@@ -165,6 +165,7 @@ void AFantasyCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	Tags.Add(FName("EngageableTarget"));
+	Tags.Add(FName("Player"));
 
 	InitializeFantasyOverlay();
 }

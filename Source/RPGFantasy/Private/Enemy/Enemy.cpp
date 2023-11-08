@@ -18,6 +18,9 @@
 #include "HUD/FantasyUserWidget.h"
 #include "AbilitySystem/FantasyAbilitySystemLibrary.h"
 #include "FantasyGameplayTags.h"
+#include "AI/FantasyAIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "BehaviorTree/BehaviorTree.h"
 
 AEnemy::AEnemy()
 {
@@ -52,16 +55,29 @@ AEnemy::AEnemy()
 	AttributeSet = CreateDefaultSubobject<UFantasyAttributeSet>("AttributeSet");
 }
 
+void AEnemy::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (!HasAuthority()) return;
+
+	FantasyAIController = Cast<AFantasyAIController>(NewController);
+	FantasyAIController->GetBlackboardComponent()->InitializeBlackboard(*BehaviorTree->BlackboardAsset);
+	FantasyAIController->RunBehaviorTree(BehaviorTree);
+	FantasyAIController->GetBlackboardComponent()->SetValueAsBool(FName("HitReacting"), false);
+	FantasyAIController->GetBlackboardComponent()->SetValueAsBool(FName("RangedAttacker"), CharacterClass != ECharacterClass::Warrior);
+}
+
 void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 	if (IsDead()) return;
 
-	if (EnemyState > EEnemyState::EES_Patrolling)
+	/*if (EnemyState > EEnemyState::EES_Patrolling)
 		CheckCombatTarget();
 	else
-		CheckPatrolTarget();
+		CheckPatrolTarget();*/
 }
 
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -105,7 +121,7 @@ void AEnemy::BeginPlay()
 	InitAbilityActorInfo();
 
 	if (HasAuthority())
-		UFantasyAbilitySystemLibrary::GiveStartupAbilities(this, AbilitySystemComponent);
+		UFantasyAbilitySystemLibrary::GiveStartupAbilities(this, AbilitySystemComponent, CharacterClass);
 
 	if (UFantasyUserWidget* FantasyUserWidget = Cast<UFantasyUserWidget>(HealthBar->GetUserWidgetObject()))
 		FantasyUserWidget->SetWidgetController(this);
@@ -155,6 +171,8 @@ void AEnemy::HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
 	bHitReacting = NewCount > 0;
 	GetCharacterMovement()->MaxWalkSpeed = bHitReacting ? 0.f : BaseWalkSpeed;
+	if (FantasyAIController && FantasyAIController->GetBlackboardComponent())
+		FantasyAIController->GetBlackboardComponent()->SetValueAsBool(FName("HitReacting"), bHitReacting);
 }
 
 void AEnemy::SpawnSoul()
@@ -197,6 +215,16 @@ void AEnemy::AttackEnd()
 {
 	EnemyState = EEnemyState::EES_NoState;
 	CheckCombatTarget();
+}
+
+void AEnemy::SetCombatTarget_Implementation(AActor* InCombatTarget)
+{
+	CombatTarget = InCombatTarget;
+}
+
+AActor* AEnemy::GetCombatTarget_Implementation() const
+{
+	return CombatTarget;
 }
 
 int32 AEnemy::GetPlayerLevel()

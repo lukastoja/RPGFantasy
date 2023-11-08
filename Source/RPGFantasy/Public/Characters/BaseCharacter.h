@@ -32,6 +32,17 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 		virtual void MulticastHandleDeath();
+
+	virtual bool IsDead_Implementation() const override;
+	virtual AActor* GetAvatar_Implementation() override;
+	virtual FVector GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag) override;
+	virtual FRotator GetActorRotation_Interface() override;
+
+	virtual TArray<FTaggedMontage> GetAttackMontage_Implementation() override;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+		TArray<FTaggedMontage> AttackMontages;
+
 protected:                                         
 	virtual void BeginPlay() override;
 	virtual void Attack();
@@ -73,14 +84,16 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 		FName WeaponTipSocketName;
 
-	virtual FVector GetCombatSocketLocation() override;
+	UPROPERTY(EditAnywhere, Category = "Combat")
+		FName LeftHandTipSocketName;
 
-	virtual FRotator GetActorRotation_Interface() override;
+	UPROPERTY(EditAnywhere, Category = "Combat")
+		FName RightHandTipSocketName;
 
 	UPROPERTY(VisibleAnywhere)
 		UAttributeComponent* Atribute;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	UPROPERTY(BlueprintReadWrite, Category = "Combat")
 		AActor* CombatTarget;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
@@ -110,6 +123,8 @@ protected:
 	virtual void InitializeDefaultAttributes() const;
 	
 	void AddCharacterAbilities();
+
+	bool bDead = false;
 
 private:
 	void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);
