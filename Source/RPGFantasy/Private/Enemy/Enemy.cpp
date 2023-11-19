@@ -165,6 +165,8 @@ void AEnemy::Die()
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	SpawnSoul();
 	DecreaseSpawnerCount();
+	if (FantasyAIController && FantasyAIController->GetBlackboardComponent())
+		FantasyAIController->GetBlackboardComponent()->SetValueAsBool(FName("Dead"), true);
 }
 
 void AEnemy::HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount)

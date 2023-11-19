@@ -276,13 +276,13 @@ AActor* ABaseCharacter::GetAvatar_Implementation()
 FVector ABaseCharacter::GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag)
 {
 	const FFantasyGameplayTags& GameplayTags = FFantasyGameplayTags::Get();
-	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Weapon))
+	if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_Weapon))
 		return GetMesh()->GetSocketLocation(WeaponTipSocketName);
 
-	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_LeftHand))
+	if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_LeftHand))
 		return GetMesh()->GetSocketLocation(LeftHandTipSocketName);
 
-	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_RightHand))
+	if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_RightHand))
 		return GetMesh()->GetSocketLocation(RightHandTipSocketName);
 
 	return FVector();
@@ -296,5 +296,21 @@ FRotator ABaseCharacter::GetActorRotation_Interface()
 TArray<FTaggedMontage> ABaseCharacter::GetAttackMontage_Implementation()
 {
 	return AttackMontages;
+}
+
+UParticleSystem* ABaseCharacter::GetBloodEffect_Implementation()
+{
+	return HitParticles;
+}
+
+FTaggedMontage ABaseCharacter::GetTaggedMontageByTag_Implementation(const FGameplayTag& MontageTag)
+{
+	for (FTaggedMontage TaggedMontage : AttackMontages)
+	{
+		if (TaggedMontage.MontageTag == MontageTag)
+			return TaggedMontage;
+	}
+
+	return FTaggedMontage();
 }
 

@@ -39,6 +39,8 @@ public:
 	virtual FRotator GetActorRotation_Interface() override;
 
 	virtual TArray<FTaggedMontage> GetAttackMontage_Implementation() override;
+	virtual UParticleSystem* GetBloodEffect_Implementation() override;
+	virtual FTaggedMontage GetTaggedMontageByTag_Implementation(const FGameplayTag& MontageTag) override;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 		TArray<FTaggedMontage> AttackMontages;
