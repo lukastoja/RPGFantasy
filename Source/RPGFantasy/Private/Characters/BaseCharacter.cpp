@@ -215,6 +215,7 @@ void ABaseCharacter::AddCharacterAbilities()
 	if (!HasAuthority()) return;
 
 	FantasyASC->AddCharacterAbilities(StartupAbilities);
+	FantasyASC->AddCharacterPassiveAbilities(StartupPassiveAbilities);
 }
 
 bool ABaseCharacter::CanAttack()
@@ -312,5 +313,10 @@ FTaggedMontage ABaseCharacter::GetTaggedMontageByTag_Implementation(const FGamep
 	}
 
 	return FTaggedMontage();
+}
+
+ECharacterClass ABaseCharacter::GetCharacterClass_Implementation()
+{
+	return CharacterClass;
 }
 

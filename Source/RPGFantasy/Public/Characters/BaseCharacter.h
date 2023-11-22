@@ -8,6 +8,7 @@
 #include "Interfaces/HitInterface.h"
 #include "Interfaces/CombatInterface.h"
 #include "Characters/CharacterTypes.h"
+#include "AbilitySystem/Data/CharacterClassInfo.h"
 #include "BaseCharacter.generated.h"
 
 class AWeapon;
@@ -41,6 +42,7 @@ public:
 	virtual TArray<FTaggedMontage> GetAttackMontage_Implementation() override;
 	virtual UParticleSystem* GetBloodEffect_Implementation() override;
 	virtual FTaggedMontage GetTaggedMontageByTag_Implementation(const FGameplayTag& MontageTag) override;
+	virtual ECharacterClass GetCharacterClass_Implementation() override;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 		TArray<FTaggedMontage> AttackMontages;
@@ -128,6 +130,9 @@ protected:
 
 	bool bDead = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
+		ECharacterClass CharacterClass = ECharacterClass::Warrior;
+
 private:
 	void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);
 	int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
@@ -159,6 +164,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 		TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
+
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+		TArray<TSubclassOf<UGameplayAbility>> StartupPassiveAbilities;
 
 public:
 	FORCEINLINE TEnumAsByte<EDeathPose> GetDeathPose() const { return DeathPose; }

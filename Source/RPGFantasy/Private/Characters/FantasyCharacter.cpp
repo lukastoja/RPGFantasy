@@ -19,6 +19,8 @@
 #include "AbilitySystemComponent.h"
 #include "Characters/FantasyPlayerController.h"
 #include "AbilitySystem/FantasyAbilitySystemComponent.h"
+#include "AbilitySystem/Data/LevelUpInfo.h"
+#include "NiagaraComponent.h"
 
 AFantasyCharacter::AFantasyCharacter()
 {
@@ -30,6 +32,10 @@ AFantasyCharacter::AFantasyCharacter()
 
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(CameraBoom);
+
+	LevelUpNiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Niagara Component"));
+	LevelUpNiagaraComponent->SetupAttachment(GetRootComponent());
+	LevelUpNiagaraComponent->bAutoActivate = false;
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
@@ -53,6 +59,8 @@ AFantasyCharacter::AFantasyCharacter()
 	Eyebrows = CreateDefaultSubobject<UGroomComponent>(TEXT("Eyebrows"));
 	Eyebrows->SetupAttachment(GetMesh());
 	Eyebrows->AttachmentName = FString("head");
+
+	CharacterClass = ECharacterClass::Elementalist;
 }
 
 void AFantasyCharacter::Tick(float DeltaTime)
@@ -145,7 +153,75 @@ void AFantasyCharacter::OnRep_PlayerState()
 	InitAbilityActorInfo();
 }
 
-int32 AFantasyCharacter::GetPlayerLevel()
+void AFantasyCharacter::AddToXP_Implementation(int32 InXP)
+{
+	AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
+	check(FantasyPlayerState);
+
+	FantasyPlayerState->AddToXP(InXP);
+}
+
+int32 AFantasyCharacter::GetXP_Implementation() const
+{
+	const AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
+	check(FantasyPlayerState);
+	return FantasyPlayerState->GetXP();
+}
+
+int32 AFantasyCharacter::FindLevelForXP_Implementation(int32 InXP) const
+{
+	const AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
+	check(FantasyPlayerState);
+	return FantasyPlayerState->LevelUpInfo->FindLevelForXP(InXP);
+}
+
+int32 AFantasyCharacter::GetAttributePointsReward_Implementation(int32 Level) const
+{
+	const AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
+	check(FantasyPlayerState);
+	return FantasyPlayerState->LevelUpInfo->LevelUpInformation[Level].AttributePointAward;
+}
+
+int32 AFantasyCharacter::GetSpellPointsReward_Implementation(int32 Level) const
+{
+	const AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
+	check(FantasyPlayerState);
+	return FantasyPlayerState->LevelUpInfo->LevelUpInformation[Level].SpellPointAward;
+}
+
+void AFantasyCharacter::AddToPlayerLevel_Implementation(int32 InPlayerLevel) 
+{
+	AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
+	check(FantasyPlayerState);
+	FantasyPlayerState->AddToLevel(InPlayerLevel);
+}
+
+void AFantasyCharacter::AddToSpellPoints_Implementation(int32 InSpellPoints) const
+{
+}
+
+void AFantasyCharacter::AddToAttrbiutePoints_Implementation(int32 InAttributePoints) const
+{
+}
+
+void AFantasyCharacter::LevelUp_Implementation()
+{
+	MulticastLevelUpParticles();
+}
+
+void AFantasyCharacter::MulticastLevelUpParticles_Implementation() const
+{
+	if (IsValid(LevelUpNiagaraComponent))
+	{
+		const FVector CameraLocation = ViewCamera->GetComponentLocation();
+		const FVector NiagaraSystemLocation = LevelUpNiagaraComponent->GetComponentLocation();
+		const FRotator ToCameraRotation = (CameraLocation - NiagaraSystemLocation).Rotation();
+		LevelUpNiagaraComponent->SetWorldRotation(ToCameraRotation);
+		LevelUpNiagaraComponent->Activate(true);
+	}
+}
+
+int32 AFantasyCharacter::GetPlayerLevel_Implementation()
 {
 	const AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
 	check(FantasyPlayerState);

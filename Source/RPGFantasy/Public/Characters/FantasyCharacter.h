@@ -6,6 +6,7 @@
 #include "BaseCharacter.h"
 #include "CharacterTypes.h"
 #include "Interfaces/PickupInterface.h"
+#include "Interfaces/PlayerInterface.h"
 #include "FantasyCharacter.generated.h"
 
 class USpringArmComponent;
@@ -16,9 +17,10 @@ class UAnimMontage;
 class UFantasyOverlay;
 class ASoul;
 class ATreasure;
+class UNiagaraComponent;
 
 UCLASS()
-class RPGFANTASY_API AFantasyCharacter : public ABaseCharacter, public IPickupInterface
+class RPGFANTASY_API AFantasyCharacter : public ABaseCharacter, public IPickupInterface, public IPlayerInterface
 {
 	GENERATED_BODY()
 
@@ -36,8 +38,22 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 
-	virtual int32 GetPlayerLevel() override;
+	virtual int32 GetPlayerLevel_Implementation() override;
 	virtual void Die() override;
+
+	virtual void AddToXP_Implementation(int32 InXP) override;
+	virtual int32 GetXP_Implementation() const override;
+	virtual int32 FindLevelForXP_Implementation(int32 InXP) const override;
+	virtual int32 GetAttributePointsReward_Implementation(int32 Level) const override;
+	virtual int32 GetSpellPointsReward_Implementation(int32 Level) const override;
+	virtual void AddToPlayerLevel_Implementation(int32 InPlayerLevel) override;
+	virtual void AddToSpellPoints_Implementation(int32 InSpellPoints) const override;
+	virtual void AddToAttrbiutePoints_Implementation(int32 InAttributePoints) const override;
+	virtual void LevelUp_Implementation() override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		TObjectPtr<UNiagaraComponent> LevelUpNiagaraComponent;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -81,6 +97,9 @@ private:
 	virtual void InitAbilityActorInfo() override;
 	void InitializeFantasyOverlay();
 	void SetHUDHealth();
+
+	UFUNCTION(NetMulticast, Reliable)
+		void MulticastLevelUpParticles() const;
 
 	//Character components
 	UPROPERTY(VisibleAnywhere)
