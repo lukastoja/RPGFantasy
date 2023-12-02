@@ -194,19 +194,42 @@ void AFantasyCharacter::AddToPlayerLevel_Implementation(int32 InPlayerLevel)
 	AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
 	check(FantasyPlayerState);
 	FantasyPlayerState->AddToLevel(InPlayerLevel);
+
+	if (UFantasyAbilitySystemComponent* FantasyASC = Cast<UFantasyAbilitySystemComponent>(GetAbilitySystemComponent()))
+		FantasyASC->UpdateAbilityStatuses(FantasyPlayerState->GetPlayerLevel());
 }
 
 void AFantasyCharacter::AddToSpellPoints_Implementation(int32 InSpellPoints) const
 {
+	AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
+	check(FantasyPlayerState);
+	FantasyPlayerState->AddToSpellPoints(InSpellPoints);
 }
 
 void AFantasyCharacter::AddToAttrbiutePoints_Implementation(int32 InAttributePoints) const
 {
+	AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
+	check(FantasyPlayerState);
+	FantasyPlayerState->AddToAttributePoints(InAttributePoints);
 }
 
 void AFantasyCharacter::LevelUp_Implementation()
 {
 	MulticastLevelUpParticles();
+}
+
+int32 AFantasyCharacter::GetAttributePoints_Implementation() const
+{
+	AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
+	check(FantasyPlayerState);
+	return FantasyPlayerState->GetAttributePoints();
+}
+
+int32 AFantasyCharacter::GetSpellPoints_Implementation() const
+{
+	AFantasyPlayerState* FantasyPlayerState = GetPlayerState<AFantasyPlayerState>();
+	check(FantasyPlayerState);
+	return FantasyPlayerState->GetSpellPoints();
 }
 
 void AFantasyCharacter::MulticastLevelUpParticles_Implementation() const

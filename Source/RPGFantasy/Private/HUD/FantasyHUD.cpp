@@ -6,6 +6,7 @@
 #include "HUD/FantasyOverlay.h"
 #include "HUD/WidgetController/OverlayWidgetController.h"
 #include "HUD/WidgetController/AttributeMenuWidgetController.h"
+#include "HUD/WidgetController/SpellMenuWidgetController.h"
 
 
 UOverlayWidgetController* AFantasyHUD::GetOverlayWidgetController(const FWidgetControllerParams& WCParams)
@@ -30,6 +31,18 @@ UAttributeMenuWidgetController* AFantasyHUD::GetAttributeMenuWidgetController(co
 	}
 
 	return AttributeMenuWidgetController;
+}
+
+USpellMenuWidgetController* AFantasyHUD::GetSpellMenuWidgetController(const FWidgetControllerParams& WCParams)
+{
+	if (SpellMenuWidgetController == nullptr)
+	{
+		SpellMenuWidgetController = NewObject<USpellMenuWidgetController>(this, SpellMenuWidgetControllerClass);
+		SpellMenuWidgetController->SetWidgetControllerParams(WCParams);
+		SpellMenuWidgetController->BindCallbacksToDependencies();
+	}
+
+	return SpellMenuWidgetController;
 }
 
 void AFantasyHUD::InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS)

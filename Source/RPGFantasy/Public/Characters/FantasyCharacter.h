@@ -50,6 +50,8 @@ public:
 	virtual void AddToSpellPoints_Implementation(int32 InSpellPoints) const override;
 	virtual void AddToAttrbiutePoints_Implementation(int32 InAttributePoints) const override;
 	virtual void LevelUp_Implementation() override;
+	virtual int32 GetAttributePoints_Implementation() const override;
+	virtual int32 GetSpellPoints_Implementation() const override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		TObjectPtr<UNiagaraComponent> LevelUpNiagaraComponent;
