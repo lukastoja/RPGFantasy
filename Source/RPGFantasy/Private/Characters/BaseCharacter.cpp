@@ -9,7 +9,8 @@
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/FantasyAbilitySystemComponent.h"
-#include <FantasyGameplayTags.h>
+#include "FantasyGameplayTags.h"
+#include "AbilitySystem/Debuff/DebuffNiagaraComponent.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -17,6 +18,10 @@ ABaseCharacter::ABaseCharacter()
 
 	Atribute = CreateDefaultSubobject<UAttributeComponent>(TEXT("Attributes"));
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+
+	BurnDebuffComponent = CreateDefaultSubobject<UDebuffNiagaraComponent>(TEXT("BurnDebuffComponent"));
+	BurnDebuffComponent->SetupAttachment(GetRootComponent());
+	BurnDebuffComponent->DebuffTag = FFantasyGameplayTags::Get().Debuff_Burn;
 }
 
 UAnimMontage* ABaseCharacter::GetHitReactMontage_Implementation()
@@ -24,16 +29,18 @@ UAnimMontage* ABaseCharacter::GetHitReactMontage_Implementation()
 	return HitReactMontage;
 }
 
-void ABaseCharacter::Die()
+void ABaseCharacter::Die(const FVector& DeathImpulse)
 {
 	Tags.Add(FName("Dead"));
 	PlayDeathMontage();
-	MulticastHandleDeath();
+	MulticastHandleDeath(DeathImpulse);
 }
 
-void ABaseCharacter::MulticastHandleDeath_Implementation()
+void ABaseCharacter::MulticastHandleDeath_Implementation(const FVector& DeathImpulse)
 {
 	bDead = true;
+	OnDeath.Broadcast(this);
+	//GetMesh()->AddImpulse(DeathImpulse); ako zelimo dodati impuls na monstere da odlete ca kada umru
 }
 
 void ABaseCharacter::BeginPlay()
@@ -46,12 +53,6 @@ void ABaseCharacter::Attack()
 	if (CombatTarget && CombatTarget->ActorHasTag(FName("Dead")))
 		CombatTarget = nullptr;
 }
-
-/*void ABaseCharacter::Die_Implementation()
-{
-	Tags.Add(FName("Dead"));
-	PlayDeathMontage();
-}*/
 
 int32 ABaseCharacter::PlayAttackMontage()
 {
@@ -242,9 +243,9 @@ void ABaseCharacter::DodgeEnd()
 }
 
 void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
-{
+{ //stari hitter funkcija
 	if (IsAlive() && Hitter) DirectionalHitReact(Hitter->GetActorLocation());
-	else Die();
+	//else Die(); lukao provijeriti
 
 	PlayHitSound(ImpactPoint);
 	SpawnHitParticles(ImpactPoint);
@@ -318,5 +319,15 @@ FTaggedMontage ABaseCharacter::GetTaggedMontageByTag_Implementation(const FGamep
 ECharacterClass ABaseCharacter::GetCharacterClass_Implementation()
 {
 	return CharacterClass;
+}
+
+FOnASCRegistered ABaseCharacter::GetOnASCRegisteredDelegate()
+{
+	return OnASCRegistered;
+}
+
+FOnDeath ABaseCharacter::GetOnDeathDelegate()
+{
+	return OnDeath;
 }
 

@@ -29,7 +29,7 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual void Die() override;
+	virtual void Die(const FVector& DeathImpulse) override;
 
 	void SpawnSoul();
 	virtual void Attack() override;

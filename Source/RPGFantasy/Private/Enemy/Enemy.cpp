@@ -153,9 +153,9 @@ void AEnemy::BeginPlay()
 	}
 }
 
-void AEnemy::Die()
+void AEnemy::Die(const FVector& DeathImpulse)
 {
-	Super::Die();
+	Super::Die(DeathImpulse);
 	EnemyState = EEnemyState::EES_Dead;
 	ClearAttackTimer();
 	DisableCapsule();
@@ -241,6 +241,8 @@ void AEnemy::InitAbilityActorInfo()
 
 	if (HasAuthority())
 		InitializeDefaultAttributes();
+
+	OnASCRegistered.Broadcast(AbilitySystemComponent);
 }
 
 void AEnemy::InitializeDefaultAttributes() const

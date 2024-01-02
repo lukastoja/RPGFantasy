@@ -252,9 +252,9 @@ int32 AFantasyCharacter::GetPlayerLevel_Implementation()
 	return FantasyPlayerState->GetPlayerLevel();
 }
 
-void AFantasyCharacter::Die()
+void AFantasyCharacter::Die(const FVector& DeathImpulse)
 {
-	Super::Die();
+	Super::Die(DeathImpulse);
 	ActionState = EActionState::EAS_Dead;
 	DisableMeshCollision();
 }
@@ -470,6 +470,8 @@ void AFantasyCharacter::InitAbilityActorInfo()
 
 	AbilitySystemComponent = FantasyPlayerState->GetAbilitySystemComponent();
 	AttributeSet = FantasyPlayerState->GetAttributeSet();
+
+	OnASCRegistered.Broadcast(AbilitySystemComponent);
 
 	if (AFantasyPlayerController* FantasyPlayerController = Cast<AFantasyPlayerController>(GetController()))
 		if (AFantasyHUD* FantasyHUD = Cast<AFantasyHUD>(FantasyPlayerController->GetHUD()))
