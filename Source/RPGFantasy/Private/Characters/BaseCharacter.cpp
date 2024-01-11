@@ -11,6 +11,9 @@
 #include "AbilitySystem/FantasyAbilitySystemComponent.h"
 #include "FantasyGameplayTags.h"
 #include "AbilitySystem/Debuff/DebuffNiagaraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include <Net/UnrealNetwork.h>
+#include "AbilitySystem/Passive/PassiveNiagaraComponent.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -22,6 +25,34 @@ ABaseCharacter::ABaseCharacter()
 	BurnDebuffComponent = CreateDefaultSubobject<UDebuffNiagaraComponent>(TEXT("BurnDebuffComponent"));
 	BurnDebuffComponent->SetupAttachment(GetRootComponent());
 	BurnDebuffComponent->DebuffTag = FFantasyGameplayTags::Get().Debuff_Burn;
+
+	StunDebuffComponent = CreateDefaultSubobject<UDebuffNiagaraComponent>(TEXT("StunDebuffComponent"));
+	StunDebuffComponent->SetupAttachment(GetRootComponent());
+	StunDebuffComponent->DebuffTag = FFantasyGameplayTags::Get().Debuff_Stun;
+
+	EffectAttachComponent = CreateDefaultSubobject<USceneComponent>("EffectAttachPoint");
+	EffectAttachComponent->SetupAttachment(GetRootComponent());
+
+	HaloOfProtectionNiagaraComponent = CreateDefaultSubobject<UPassiveNiagaraComponent>("haloOfProtection");
+	HaloOfProtectionNiagaraComponent->SetupAttachment(EffectAttachComponent);
+
+	LifeSiphonNiagaraComponent = CreateDefaultSubobject<UPassiveNiagaraComponent>("LifeSiphon");
+	LifeSiphonNiagaraComponent->SetupAttachment(EffectAttachComponent);
+
+	ManaSiphonNiagaraComponent = CreateDefaultSubobject<UPassiveNiagaraComponent>("ManaSiphon");
+	ManaSiphonNiagaraComponent->SetupAttachment(EffectAttachComponent);
+}
+
+void ABaseCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	EffectAttachComponent->SetWorldRotation(FRotator::ZeroRotator);
+}
+
+void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ABaseCharacter, bIsStunned);
 }
 
 UAnimMontage* ABaseCharacter::GetHitReactMontage_Implementation()
@@ -40,7 +71,20 @@ void ABaseCharacter::MulticastHandleDeath_Implementation(const FVector& DeathImp
 {
 	bDead = true;
 	OnDeath.Broadcast(this);
+	StunDebuffComponent->Deactivate();
+	BurnDebuffComponent->Deactivate();
 	//GetMesh()->AddImpulse(DeathImpulse); ako zelimo dodati impuls na monstere da odlete ca kada umru
+}
+
+void ABaseCharacter::StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	bIsStunned = NewCount > 0;
+	GetCharacterMovement()->MaxWalkSpeed = bIsStunned ? 0.f : BaseWalkSpeed;
+}
+
+void ABaseCharacter::OnRep_Stunned()
+{
+
 }
 
 void ABaseCharacter::BeginPlay()
@@ -321,7 +365,7 @@ ECharacterClass ABaseCharacter::GetCharacterClass_Implementation()
 	return CharacterClass;
 }
 
-FOnASCRegistered ABaseCharacter::GetOnASCRegisteredDelegate()
+FOnASCRegistered& ABaseCharacter::GetOnASCRegisteredDelegate()
 {
 	return OnASCRegistered;
 }
@@ -329,5 +373,10 @@ FOnASCRegistered ABaseCharacter::GetOnASCRegisteredDelegate()
 FOnDeath ABaseCharacter::GetOnDeathDelegate()
 {
 	return OnDeath;
+}
+
+USkeletalMeshComponent* ABaseCharacter::GetMeshComponent_Implementation()
+{
+	return GetMesh();
 }
 

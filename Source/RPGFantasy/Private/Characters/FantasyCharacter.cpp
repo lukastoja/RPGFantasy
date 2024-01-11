@@ -21,6 +21,8 @@
 #include "AbilitySystem/FantasyAbilitySystemComponent.h"
 #include "AbilitySystem/Data/LevelUpInfo.h"
 #include "NiagaraComponent.h"
+#include "AbilitySystem/Debuff/DebuffNiagaraComponent.h"
+#include <FantasyGameplayTags.h>
 
 AFantasyCharacter::AFantasyCharacter()
 {
@@ -259,6 +261,30 @@ void AFantasyCharacter::Die(const FVector& DeathImpulse)
 	DisableMeshCollision();
 }
 
+void AFantasyCharacter::OnRep_Stunned()
+{
+	if (UFantasyAbilitySystemComponent* FantasyASC = Cast<UFantasyAbilitySystemComponent>(AbilitySystemComponent))
+	{
+		const FFantasyGameplayTags& GameplayTags = FFantasyGameplayTags::Get();
+		FGameplayTagContainer BlockedTags;
+		BlockedTags.AddTag(GameplayTags.Player_Block_CursorTrace);
+		BlockedTags.AddTag(GameplayTags.Player_Block_InputHeld);
+		BlockedTags.AddTag(GameplayTags.Player_Block_InputPressed);
+		BlockedTags.AddTag(GameplayTags.Player_Block_InputReleased);
+		if (bIsStunned)
+		{
+			FantasyASC->AddLooseGameplayTags(BlockedTags);
+			StunDebuffComponent->Activate();
+		}
+		else
+		{
+			FantasyASC->RemoveLooseGameplayTags(BlockedTags);
+			StunDebuffComponent->Activate();
+		}
+			
+	}
+}
+
 void AFantasyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -472,6 +498,7 @@ void AFantasyCharacter::InitAbilityActorInfo()
 	AttributeSet = FantasyPlayerState->GetAttributeSet();
 
 	OnASCRegistered.Broadcast(AbilitySystemComponent);
+	AbilitySystemComponent->RegisterGameplayTagEvent(FFantasyGameplayTags::Get().Debuff_Stun, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AFantasyCharacter::StunTagChanged);
 
 	if (AFantasyPlayerController* FantasyPlayerController = Cast<AFantasyPlayerController>(GetController()))
 		if (AFantasyHUD* FantasyHUD = Cast<AFantasyHUD>(FantasyPlayerController->GetHUD()))

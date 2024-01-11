@@ -234,10 +234,19 @@ int32 AEnemy::GetPlayerLevel_Implementation()
 	return Level;
 }
 
+void AEnemy::StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	Super::StunTagChanged(CallbackTag, NewCount);
+
+	if (FantasyAIController && FantasyAIController->GetBlackboardComponent())
+		FantasyAIController->GetBlackboardComponent()->SetValueAsBool(FName("Stunned"), bIsStunned);
+}
+
 void AEnemy::InitAbilityActorInfo()
 {
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	Cast<UFantasyAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
+	AbilitySystemComponent->RegisterGameplayTagEvent(FFantasyGameplayTags::Get().Debuff_Stun, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AEnemy::StunTagChanged);
 
 	if (HasAuthority())
 		InitializeDefaultAttributes();

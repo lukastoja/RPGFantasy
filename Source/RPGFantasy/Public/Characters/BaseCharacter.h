@@ -19,6 +19,7 @@ class UAttributeSet;
 class UGameplayEffect;
 class UGameplayAbility;
 class UDebuffNiagaraComponent;
+class UPassiveNiagaraComponent;
 
 UCLASS()
 class RPGFANTASY_API ABaseCharacter : public ACharacter, public IHitInterface, public IAbilitySystemInterface, public ICombatInterface
@@ -27,6 +28,8 @@ class RPGFANTASY_API ABaseCharacter : public ACharacter, public IHitInterface, p
 
 public:                                              
 	ABaseCharacter();
+	virtual void Tick(float DeltaTime) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual UAnimMontage* GetHitReactMontage_Implementation() override;
@@ -44,8 +47,10 @@ public:
 	virtual UParticleSystem* GetBloodEffect_Implementation() override;
 	virtual FTaggedMontage GetTaggedMontageByTag_Implementation(const FGameplayTag& MontageTag) override;
 	virtual ECharacterClass GetCharacterClass_Implementation() override;
-	virtual FOnASCRegistered GetOnASCRegisteredDelegate() override;
+	virtual FOnASCRegistered& GetOnASCRegisteredDelegate() override;
 	virtual FOnDeath GetOnDeathDelegate() override;
+
+	virtual USkeletalMeshComponent* GetMeshComponent_Implementation() override;
 
 	FOnASCRegistered OnASCRegistered;
 	FOnDeath OnDeath;
@@ -53,6 +58,16 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 		TArray<FTaggedMontage> AttackMontages;
 
+	UPROPERTY(ReplicatedUsing = OnRep_Stunned, BlueprintReadOnly)
+		bool bIsStunned = false;
+
+	virtual void StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+		float BaseWalkSpeed = 250.f;
+
+	UFUNCTION()
+		virtual void OnRep_Stunned();
 protected:                                         
 	virtual void BeginPlay() override;
 	virtual void Attack();
@@ -142,6 +157,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 		TObjectPtr<UDebuffNiagaraComponent> BurnDebuffComponent;
 
+	UPROPERTY(VisibleAnywhere)
+		TObjectPtr<UDebuffNiagaraComponent> StunDebuffComponent;
+
 private:
 	void PlayMontageSection(UAnimMontage* Montage, const FName& SectionName);
 	int32 PlayRandomMontageSection(UAnimMontage* Montage, const TArray<FName>& SectionNames);
@@ -176,6 +194,18 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 		TArray<TSubclassOf<UGameplayAbility>> StartupPassiveAbilities;
+
+	UPROPERTY(VisibleAnywhere)
+		TObjectPtr<UPassiveNiagaraComponent> HaloOfProtectionNiagaraComponent;
+
+	UPROPERTY(VisibleAnywhere)
+		TObjectPtr<UPassiveNiagaraComponent> LifeSiphonNiagaraComponent;
+
+	UPROPERTY(VisibleAnywhere)
+		TObjectPtr<UPassiveNiagaraComponent> ManaSiphonNiagaraComponent;
+
+	UPROPERTY(VisibleAnywhere)
+		TObjectPtr<USceneComponent> EffectAttachComponent;
 
 public:
 	FORCEINLINE TEnumAsByte<EDeathPose> GetDeathPose() const { return DeathPose; }
