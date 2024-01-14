@@ -234,6 +234,18 @@ int32 AFantasyCharacter::GetSpellPoints_Implementation() const
 	return FantasyPlayerState->GetSpellPoints();
 }
 
+void AFantasyCharacter::ShowMagicCircle_Implementation(UMaterialInterface* DecalMaterial)
+{
+	if (AFantasyPlayerController* FantasyPlayerController = Cast<AFantasyPlayerController>(GetController()))
+		FantasyPlayerController->ShowMagicCircle(DecalMaterial);
+}
+
+void AFantasyCharacter::HideMagicCircle_Implementation()
+{
+	if (AFantasyPlayerController* FantasyPlayerController = Cast<AFantasyPlayerController>(GetController()))
+		FantasyPlayerController->HideMagicCircle();
+}
+
 void AFantasyCharacter::MulticastLevelUpParticles_Implementation() const
 {
 	if (IsValid(LevelUpNiagaraComponent))
