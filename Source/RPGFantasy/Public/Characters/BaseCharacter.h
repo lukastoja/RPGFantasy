@@ -34,6 +34,8 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual UAnimMontage* GetHitReactMontage_Implementation() override;
 	virtual void Die(const FVector& DeathImpulse) override;
+	virtual void CalculateHitReactMontage(const FVector& ImpactPoint) override;
+	virtual FName GetHitReactSectionName_Implementation() override;
 
 	UFUNCTION(NetMulticast, Reliable)
 		virtual void MulticastHandleDeath(const FVector& DeathImpulse);
@@ -52,8 +54,13 @@ public:
 
 	virtual USkeletalMeshComponent* GetMeshComponent_Implementation() override;
 
+	virtual FOnDamageSignature& GetOnDamageSignature() override;
+
 	FOnASCRegistered OnASCRegistered;
 	FOnDeath OnDeath;
+	FOnDamageSignature OnDamageDelegate;
+
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 		TArray<FTaggedMontage> AttackMontages;
@@ -206,6 +213,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 		TObjectPtr<USceneComponent> EffectAttachComponent;
+
+		FName HitReactSectionName = FName("FromBack");
 
 public:
 	FORCEINLINE TEnumAsByte<EDeathPose> GetDeathPose() const { return DeathPose; }

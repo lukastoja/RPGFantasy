@@ -67,6 +67,44 @@ void ABaseCharacter::Die(const FVector& DeathImpulse)
 	MulticastHandleDeath(DeathImpulse);
 }
 
+void ABaseCharacter::CalculateHitReactMontage(const FVector& ImpactPoint)
+{
+	HitReactSectionName = FName("FromBack");
+
+	const FVector Forward = GetActorForwardVector();
+	// Lower Impact Point to the Enemy's Actor Location Z
+	const FVector ImpactLowered(ImpactPoint.X, ImpactPoint.Y, GetActorLocation().Z);
+	const FVector test = GetActorLocation();
+	const FVector ToHit = (ImpactLowered - GetActorLocation()).GetSafeNormal();
+
+	// Forward * ToHit = |Forward| |ToHit| * cos (theta)
+	// |Forward| = 1, |ToHit| = 1, so Forward * ToHit = cos(theta)
+	const double CosTheta = FVector::DotProduct(Forward, ToHit);
+
+	// Take the inverse cosine (arc-cosine) of cos(theta) to get theta
+	double Theta = FMath::Acos(CosTheta);
+
+	//convert from radians to degrees
+	Theta = FMath::RadiansToDegrees(Theta);
+
+	// if cross product points down, theta should be negative
+	const FVector CrossProduct = FVector::CrossProduct(Forward, ToHit);
+	if (CrossProduct.Z < 0)
+		Theta *= -1.f;
+
+	if (Theta < 45.f && Theta >= -45.f)
+		HitReactSectionName = FName("FromFront");
+	else if (Theta < -45.f && Theta >= -135.f)
+		HitReactSectionName = FName("FromLeft");
+	else if (Theta >= 45.f && Theta < 135.f)
+		HitReactSectionName = FName("FromRight");
+}
+
+FName ABaseCharacter::GetHitReactSectionName_Implementation()
+{
+	return HitReactSectionName;
+}
+
 void ABaseCharacter::MulticastHandleDeath_Implementation(const FVector& DeathImpulse)
 {
 	bDead = true;
@@ -165,36 +203,7 @@ void ABaseCharacter::PlayHitReactMontage(const FName& SectionName)
 
 void ABaseCharacter::DirectionalHitReact(const FVector& ImpactPoint)
 {
-	FName Section = FName("FromBack");
-
-	const FVector Forward = GetActorForwardVector();
-	// Lower Impact Point to the Enemy's Actor Location Z
-	const FVector ImpactLowered(ImpactPoint.X, ImpactPoint.Y, GetActorLocation().Z);
-	const FVector ToHit = (ImpactLowered - GetActorLocation()).GetSafeNormal();
-
-	// Forward * ToHit = |Forward| |ToHit| * cos (theta)
-	// |Forward| = 1, |ToHit| = 1, so Forward * ToHit = cos(theta)
-	const double CosTheta = FVector::DotProduct(Forward, ToHit);
-
-	// Take the inverse cosine (arc-cosine) of cos(theta) to get theta
-	double Theta = FMath::Acos(CosTheta);
-
-	//convert from radians to degrees
-	Theta = FMath::RadiansToDegrees(Theta);
-
-	// if cross product points down, theta should be negative
-	const FVector CrossProduct = FVector::CrossProduct(Forward, ToHit);
-	if (CrossProduct.Z < 0)
-		Theta *= -1.f;
-
-	if (Theta < 45.f && Theta >= -45.f)
-		Section = FName("FromFront");
-	else if (Theta < -45.f && Theta >= -135.f)
-		Section = FName("FromLeft");
-	else if (Theta >= 45.f && Theta < 135.f)
-		Section = FName("FromRight");
-
-	PlayHitReactMontage(Section);
+	//PlayHitReactMontage(Section);
 }
 
 void ABaseCharacter::PlayHitSound(const FVector& ImpactPoint)
@@ -378,5 +387,17 @@ FOnDeath ABaseCharacter::GetOnDeathDelegate()
 USkeletalMeshComponent* ABaseCharacter::GetMeshComponent_Implementation()
 {
 	return GetMesh();
+}
+
+FOnDamageSignature& ABaseCharacter::GetOnDamageSignature()
+{
+	return OnDamageDelegate;
+}
+
+float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	const float DamageTaken = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	OnDamageDelegate.Broadcast(DamageTaken);
+	return DamageTaken;
 }
 

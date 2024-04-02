@@ -21,9 +21,16 @@ bool FFantasyGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map,
 		if (DamageType.IsValid()) RepBits |= 1 << 13;
 		if (!DeathImpulse.IsZero()) RepBits |= 1 << 14;
 		if (!KonckbackForce.IsZero()) RepBits |= 1 << 15;
+		if (bIsRadialDamage)
+		{
+			RepBits |= 1 << 16;
+			if (RadialDamageInnerRadius > 0.f) RepBits |= 1 << 17;
+			if (RadialDamageOuterRadius > 0.f) RepBits |= 1 << 18;
+			if (!RadialDamageOrigin.IsZero()) RepBits |= 1 << 19;
+		}
 	}
 
-	Ar.SerializeBits(&RepBits, 15);
+	Ar.SerializeBits(&RepBits, 19);
 
 	if (RepBits & (1 << 0)) Ar << Instigator;
 	if (RepBits & (1 << 1)) Ar << EffectCauser;
@@ -66,6 +73,14 @@ bool FFantasyGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map,
 
 	if (RepBits & (1 << 14)) DeathImpulse.NetSerialize(Ar, Map, bOutSuccess);
 	if (RepBits & (1 << 15)) KonckbackForce.NetSerialize(Ar, Map, bOutSuccess);
+
+	if (RepBits & (1 << 16))
+	{
+		Ar << bIsRadialDamage;
+		if (RepBits & (1 << 17)) Ar << RadialDamageInnerRadius;
+		if (RepBits & (1 << 18)) Ar << RadialDamageOuterRadius;
+		if (RepBits & (1 << 19)) RadialDamageOrigin.NetSerialize(Ar, Map, bOutSuccess);
+	}
  
 	if (Ar.IsLoading()) AddInstigator(Instigator.Get(), EffectCauser.Get());
 
