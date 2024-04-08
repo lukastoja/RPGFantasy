@@ -54,6 +54,7 @@ public:
 	virtual int32 GetSpellPoints_Implementation() const override;
 	virtual void ShowMagicCircle_Implementation(UMaterialInterface* DecalMaterial) override;
 	virtual void HideMagicCircle_Implementation() override;
+	void SaveProgress_Implementation(const FName& CheckpointTag) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		TObjectPtr<UNiagaraComponent> LevelUpNiagaraComponent;
@@ -88,6 +89,8 @@ protected:
 	//virtual void Die_Implementation() override;
 	bool HasEnoughStamina();
 	bool IsOccupied();
+
+	void LoadProgress();
 
 	UFUNCTION(BlueprintCallable)
 		void AttachWeaponToBack();

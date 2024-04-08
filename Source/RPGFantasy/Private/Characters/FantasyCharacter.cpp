@@ -22,7 +22,13 @@
 #include "AbilitySystem/Data/LevelUpInfo.h"
 #include "NiagaraComponent.h"
 #include "AbilitySystem/Debuff/DebuffNiagaraComponent.h"
-#include <FantasyGameplayTags.h>
+#include "FantasyGameplayTags.h"
+#include "Game/FantasyGameModeBase.h"
+#include "Kismet/GameplayStatics.h"
+#include "Game/LoadScreenSaveGame.h"
+#include "AbilitySystem/FantasyAttributeSet.h"
+#include "AbilitySystem/FantasyAbilitySystemLibrary.h"
+#include "AbilitySystem/Data/AbilityInfo.h"
 
 AFantasyCharacter::AFantasyCharacter()
 {
@@ -144,7 +150,11 @@ void AFantasyCharacter::PossessedBy(AController* NewController)
 
 	// Init ability actor info for the Server
 	InitAbilityActorInfo();
-	AddCharacterAbilities();
+	LoadProgress();
+	//AddCharacterAbilities();
+
+	if (AFantasyGameModeBase* FantasyGM = Cast<AFantasyGameModeBase>(UGameplayStatics::GetGameMode(this)))
+		FantasyGM->LoadWorldState(GetWorld());
 }
 
 void AFantasyCharacter::OnRep_PlayerState()
@@ -244,6 +254,60 @@ void AFantasyCharacter::HideMagicCircle_Implementation()
 {
 	if (AFantasyPlayerController* FantasyPlayerController = Cast<AFantasyPlayerController>(GetController()))
 		FantasyPlayerController->HideMagicCircle();
+}
+
+void AFantasyCharacter::SaveProgress_Implementation(const FName& CheckpointTag)
+{
+	if (AFantasyGameModeBase* FantasyGameMode = Cast<AFantasyGameModeBase>(UGameplayStatics::GetGameMode(this)))
+	{
+		ULoadScreenSaveGame* SaveData = FantasyGameMode->RetriveInGameSavedata();
+		if (SaveData == nullptr) return;
+		
+		SaveData->PlayerStartTag = CheckpointTag;
+
+		if (AFantasyPlayerState* FantasyPlayerState = Cast<AFantasyPlayerState>(GetPlayerState()))
+		{
+			SaveData->PlayerLevel = FantasyPlayerState->GetPlayerLevel();
+			SaveData->XP = FantasyPlayerState->GetXP();
+			SaveData->AttributePoints = FantasyPlayerState->GetAttributePoints();
+			SaveData->SpellPoints = FantasyPlayerState->GetSpellPoints();
+		}
+
+		SaveData->Strength = UFantasyAttributeSet::GetStrengthAttribute().GetNumericValue(GetAttributeSet());
+		SaveData->Intelligence = UFantasyAttributeSet::GetIntelligenceAttribute().GetNumericValue(GetAttributeSet());
+		SaveData->Resilience = UFantasyAttributeSet::GetResilienceAttribute().GetNumericValue(GetAttributeSet());
+		SaveData->Vigor = UFantasyAttributeSet::GetVigorAttribute().GetNumericValue(GetAttributeSet());
+
+		SaveData->bFirstTimeLoadIn = false;
+
+		if (!HasAuthority()) return;
+
+
+		UFantasyAbilitySystemComponent* FantasyASC = Cast<UFantasyAbilitySystemComponent>(AbilitySystemComponent);
+		FForEachAbility SaveAbilityDelegate;
+		SaveData->SavedAbilities.Empty();
+
+		SaveAbilityDelegate.BindLambda([this, FantasyASC, SaveData](const FGameplayAbilitySpec& AbilitySpec)
+			{
+				const FGameplayTag AbilityTag = FantasyASC->GetAbilityTagFromSpec(AbilitySpec);
+				UAbilityInfo* AbilityInfo = UFantasyAbilitySystemLibrary::GetAbilityInfo(this);
+				FFantasyAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
+
+				FSavedAbility SavedAbility;
+				SavedAbility.GameplayAbility = Info.Ability;
+				SavedAbility.AbilityLevel = AbilitySpec.Level;
+				SavedAbility.AbilitySlot = FantasyASC->GetSlotFromAbilityTag(AbilityTag);
+				SavedAbility.AbilityStatus = FantasyASC->GetStatusFromAbilityTag(AbilityTag);
+				SavedAbility.AbilityTag = AbilityTag;
+				SavedAbility.AbilityType = Info.AbilityType;
+
+				SaveData->SavedAbilities.AddUnique(SavedAbility);
+			});
+
+		FantasyASC->ForEachAbility(SaveAbilityDelegate);
+
+		FantasyGameMode->SaveInGameProgressData(SaveData);
+	}
 }
 
 void AFantasyCharacter::MulticastLevelUpParticles_Implementation() const
@@ -468,6 +532,35 @@ bool AFantasyCharacter::IsOccupied()
 	return ActionState != EActionState::EAS_Unoccupied;
 }
 
+void AFantasyCharacter::LoadProgress()
+{
+	if (AFantasyGameModeBase* FantasyGameMode = Cast<AFantasyGameModeBase>(UGameplayStatics::GetGameMode(this)))
+	{
+		ULoadScreenSaveGame* SaveData = FantasyGameMode->RetriveInGameSavedata();
+		if (SaveData == nullptr) return;
+
+		if (SaveData->bFirstTimeLoadIn)
+		{
+			InitializeDefaultAttributes();
+			AddCharacterAbilities();
+		}
+		else
+		{
+			if (UFantasyAbilitySystemComponent* FantasyASC = Cast<UFantasyAbilitySystemComponent>(AbilitySystemComponent))
+				FantasyASC->AddCharacterAbilitiesFromSaveData(SaveData);
+
+			if (AFantasyPlayerState* FantasyPlayerState = Cast<AFantasyPlayerState>(GetPlayerState()))
+			{
+				FantasyPlayerState->SetLevel(SaveData->PlayerLevel);
+				FantasyPlayerState->SetXP(SaveData->XP);
+				FantasyPlayerState->SetAttributePoints(SaveData->AttributePoints);
+				FantasyPlayerState->SetSpellPoints(SaveData->SpellPoints);
+			}
+			UFantasyAbilitySystemLibrary::InitializeDefaultAttributesFromSaveData(this, AbilitySystemComponent, SaveData);
+		}
+	}
+}
+
 void AFantasyCharacter::AttachWeaponToBack()
 {
 	if (EquippedWeapon)
@@ -515,8 +608,6 @@ void AFantasyCharacter::InitAbilityActorInfo()
 	if (AFantasyPlayerController* FantasyPlayerController = Cast<AFantasyPlayerController>(GetController()))
 		if (AFantasyHUD* FantasyHUD = Cast<AFantasyHUD>(FantasyPlayerController->GetHUD()))
 			FantasyHUD->InitOverlay(FantasyPlayerController, FantasyPlayerState, AbilitySystemComponent, AttributeSet);
-
-	InitializeDefaultAttributes();
 }
 
 void AFantasyCharacter::InitializeFantasyOverlay()
