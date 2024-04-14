@@ -167,6 +167,8 @@ void AEnemy::Die(const FVector& DeathImpulse)
 	DecreaseSpawnerCount();
 	if (FantasyAIController && FantasyAIController->GetBlackboardComponent())
 		FantasyAIController->GetBlackboardComponent()->SetValueAsBool(FName("Dead"), true);
+
+	SpawnLoot();
 }
 
 void AEnemy::HitReactTagChanged(const FGameplayTag CallbackTag, int32 NewCount)

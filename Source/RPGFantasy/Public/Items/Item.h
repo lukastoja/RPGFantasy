@@ -86,7 +86,9 @@ protected:
 		virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	virtual void SpawnPickupSystem();
-	virtual void SpawnPickupSound();
+
+	UFUNCTION(BlueprintCallable)
+		virtual void SpawnPickupSound();
 
 	UPROPERTY(VisibleAnywhere)
 		USphereComponent* Sphere;
@@ -111,7 +113,7 @@ protected:
 
 	TMap<FActiveGameplayEffectHandle, UAbilitySystemComponent*> ActiveEffectHandles;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Applied Effects")
 		float ActorLevel = 1.f;
 
 private:

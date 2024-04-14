@@ -335,6 +335,16 @@ void AFantasyCharacter::Die(const FVector& DeathImpulse)
 	Super::Die(DeathImpulse);
 	ActionState = EActionState::EAS_Dead;
 	DisableMeshCollision();
+
+	FTimerDelegate DeathTimerDelegate;
+	DeathTimerDelegate.BindLambda([this]
+		{
+			AFantasyGameModeBase* FantasyGM = Cast<AFantasyGameModeBase>(UGameplayStatics::GetGameMode(this));
+			if (FantasyGM)
+				FantasyGM->PlayerDied(this);
+		});
+
+	GetWorldTimerManager().SetTimer(DeathTimer, DeathTimerDelegate, DeathTime, false);
 }
 
 void AFantasyCharacter::OnRep_Stunned()
