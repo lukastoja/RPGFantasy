@@ -8,8 +8,9 @@ public class RPGFantasyTarget : TargetRules
 	public RPGFantasyTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
-		DefaultBuildSettings = BuildSettingsVersion.V2;
+		DefaultBuildSettings = BuildSettingsVersion.V5;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
 
-		ExtraModuleNames.AddRange( new string[] { "RPGFantasy" } );
+        ExtraModuleNames.AddRange( new string[] { "RPGFantasy" } );
 	}
 }
