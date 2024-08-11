@@ -62,3 +62,4 @@ void AFantasyHUD::InitOverlay(APlayerController* PC, APlayerState* PS, UAbilityS
 		OverlayWidget->AddToViewport();
 	}
 }
+

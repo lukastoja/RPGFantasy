@@ -29,6 +29,7 @@
 #include "AbilitySystem/FantasyAttributeSet.h"
 #include "AbilitySystem/FantasyAbilitySystemLibrary.h"
 #include "AbilitySystem/Data/AbilityInfo.h"
+#include "Component/InventoryComponent.h"
 
 AFantasyCharacter::AFantasyCharacter()
 {
@@ -69,6 +70,8 @@ AFantasyCharacter::AFantasyCharacter()
 	Eyebrows->AttachmentName = FString("head");
 
 	CharacterClass = ECharacterClass::Elementalist;
+
+	Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventory"));
 }
 
 void AFantasyCharacter::Tick(float DeltaTime)
@@ -80,21 +83,6 @@ void AFantasyCharacter::Tick(float DeltaTime)
 		Atribute->RegenStamina(DeltaTime);
 		FantasyOverlay->SetStaminaBarPercent(Atribute->GetStaminaPercent());
 	}
-}
-
-void AFantasyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &AFantasyCharacter::MoveForward);
-	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &AFantasyCharacter::Turn);
-	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &AFantasyCharacter::LookUp);
-	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AFantasyCharacter::MoveRight);
-
-	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction(TEXT("Equip"), IE_Pressed, this, &AFantasyCharacter::EKeyPressed);
-	PlayerInputComponent->BindAction(TEXT("Attack"), IE_Pressed, this, &AFantasyCharacter::Attack);
-	PlayerInputComponent->BindAction(TEXT("Dodge"), IE_Pressed, this, &AFantasyCharacter::Dodge);
 }
 
 void AFantasyCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
@@ -142,6 +130,13 @@ void AFantasyCharacter::AddGold(ATreasure* Gold)
 		Atribute->AddGold(Gold->GetGold());
 		FantasyOverlay->SetGold(Atribute->GetGold());
 	}
+}
+
+void AFantasyCharacter::AddItemToInventory(AItem* Item)
+{
+	//to do napravi ubacivanje itema u inventory
+	Inventory->AddItem(Item);
+	return;
 }
 
 void AFantasyCharacter::PossessedBy(AController* NewController)
@@ -424,6 +419,14 @@ void AFantasyCharacter::LookUp(float Value)
 void AFantasyCharacter::EKeyPressed()
 {
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
+	if (EquippedWeapon != nullptr && OverlappingWeapon)
+	{
+		AddItemToInventory(EquippedWeapon);
+		EquippedWeapon->HideActorInGame();
+		EquippedWeapon->RemoveMeshFromSocket();
+		CharacterState = ECharacterState::ECS_Unequipped;
+		EquippedWeapon = nullptr;
+	}
 	if (OverlappingWeapon) Equip(OverlappingWeapon);
 	else
 	{
@@ -460,6 +463,20 @@ void AFantasyCharacter::Dodge()
 	{
 		Atribute->UseStamina(Atribute->GetDodgeCost());
 		FantasyOverlay->SetStaminaBarPercent(Atribute->GetStaminaPercent());
+	}
+}
+
+void AFantasyCharacter::OpenInventory()
+{
+	if (InventoryWidget != nullptr)
+	{
+		InventoryWidget->RemoveFromParent();
+		InventoryWidget = nullptr;
+	}
+	else
+	{
+		InventoryWidget = CreateWidget<UUserWidget>(GetWorld(), InventoryWidgetClass);
+		InventoryWidget->AddToViewport();
 	}
 }
 

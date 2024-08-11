@@ -22,6 +22,9 @@ public:
 	void DisableSphereCollision();
 	void PlayEquipSound();
 	void AttachMeshToSocket(USceneComponent* InParent, const FName InSocketName);
+	void RemoveMeshFromSocket();
+	virtual void Use(AActor* TargerActor) override;
+
 	TArray<AActor*> IgnoreActors;
 
 protected:

@@ -77,6 +77,16 @@ void AItem::OnOverlap(AActor* TargetActor)
 
 	if (InfiniteEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnOverlap)
 		ApplyEffectToTarget(TargetActor, InfiniteGameplayEffectClass);
+
+	if (TargetActor->ActorHasTag(FName("Player")) && InfiniteEffectApplicationPolicy == EEffectApplicationPolicy::DoNotAplly && InstantEffectApplicationPolicy == EEffectApplicationPolicy::DoNotAplly)
+	{
+		IPickupInterface* PickupInterface = Cast<IPickupInterface>(TargetActor);
+		if (PickupInterface)
+		{
+			PickupInterface->AddItemToInventory(this);
+			HideActorInGame();
+		}
+	}
 }
 
 void AItem::OnEndOverlap(AActor* TargetActor)
@@ -132,6 +142,25 @@ void AItem::SpawnPickupSound()
 {
 	if (PickupSound)
 		UGameplayStatics::SpawnSoundAtLocation(this, PickupSound, GetActorLocation());
+}
+
+void AItem::Use(AActor* TargetActor)
+{
+	ApplyEffectToTarget(TargetActor, InstantGameplayEffectClass);
+}
+
+void AItem::HideActorInGame()
+{
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+	SetActorTickEnabled(false);
+}
+
+void AItem::ShowActorInGame()
+{
+	SetActorHiddenInGame(false);
+	SetActorEnableCollision(true);
+	SetActorTickEnabled(true);
 }
 
 float AItem::TransformedSin()

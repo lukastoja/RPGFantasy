@@ -18,6 +18,7 @@ class UFantasyOverlay;
 class ASoul;
 class ATreasure;
 class UNiagaraComponent;
+class UInventoryComponent;
 
 UCLASS()
 class RPGFANTASY_API AFantasyCharacter : public ABaseCharacter, public IPickupInterface, public IPlayerInterface
@@ -27,13 +28,17 @@ class RPGFANTASY_API AFantasyCharacter : public ABaseCharacter, public IPickupIn
 public:
 	AFantasyCharacter();
 	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void Jump() override;
 	virtual void SetOverlappingItem(AItem* Item) override;
 	virtual void AddSouls(ASoul* Soul) override;
 	virtual void AddGold(ATreasure* Gold) override;
+	virtual void AddItemToInventory(class AItem* Item) override;
+	void EKeyPressed();
+	virtual void Attack() override;
+	void Dodge();
+	void OpenInventory();
 
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
@@ -77,9 +82,6 @@ protected:
 	void MoveRight(float Value);
 	void Turn(float Value);
 	void LookUp(float Value);
-	void EKeyPressed();
-	virtual void Attack() override;
-	void Dodge();
 
 	//Combat
 	void Equip(AWeapon* Weapon);
@@ -108,6 +110,10 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 		void HitReactEnd();
+
+	//Inventory
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		UInventoryComponent* Inventory;
 
 private:
 	bool IsUnoccupied();
@@ -144,6 +150,11 @@ private:
 
 	UPROPERTY()
 		UFantasyOverlay* FantasyOverlay;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
+		TSubclassOf<UUserWidget> InventoryWidgetClass;
+
+	TObjectPtr<UUserWidget> InventoryWidget;
 
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState;  }

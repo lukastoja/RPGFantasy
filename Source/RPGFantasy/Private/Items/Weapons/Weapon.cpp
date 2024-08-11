@@ -62,7 +62,21 @@ void AWeapon::AttachMeshToSocket(USceneComponent* InParent, const FName InSocket
 {
 	FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
 	ItemMesh->AttachToComponent(InParent, TransformRules, InSocketName);
-	
+}
+
+void AWeapon::RemoveMeshFromSocket()
+{
+	ItemMesh->DetachFromParent();
+}
+
+void AWeapon::Use(AActor* TargerActor)
+{
+	ShowActorInGame();
+	if (AFantasyCharacter* player = Cast<AFantasyCharacter>(TargerActor))
+	{
+		player->SetOverlappingItem(this);
+		player->EKeyPressed();
+	}
 }
 
 void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

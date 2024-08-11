@@ -41,6 +41,22 @@ public:
 	AItem();
 	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		TObjectPtr<const UTexture2D> Icon = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		TObjectPtr<const UMaterialInstance> BackgroundMaterial = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		FName ItemTag = FName("");
+
+	//testing inventory
+	UFUNCTION(BlueprintCallable)
+		virtual void Use(AActor* TargetActor);
+
+	void HideActorInGame();
+	void ShowActorInGame();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -89,7 +105,7 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 		virtual void SpawnPickupSound();
-
+		
 	UPROPERTY(VisibleAnywhere)
 		USphereComponent* Sphere;
 
@@ -126,8 +142,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Sound")
 		USoundBase* PickupSound;
 
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+		bool DestroyAfterUse = false;
+
 public:
 	FORCEINLINE UStaticMeshComponent* GetItemMesh() const { return ItemMesh; }
+	FORCEINLINE bool ShouldDestroyAfterUse() const { return DestroyAfterUse; }
 };
 
 template<typename T>
